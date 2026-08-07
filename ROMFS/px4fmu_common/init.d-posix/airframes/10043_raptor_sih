@@ -1,0 +1,66 @@
+#!/bin/sh
+#
+# @name Raptor x500 SIH
+#
+# @type Quadrotor
+#
+# Self-contained SITL for the RLtools/Raptor benchmark: PX4's built-in SIH physics (no Gazebo),
+# x500 geometry and inertia from external_modules/.../rl_tools_policy/params/x500_sih.params, and
+# the RLtools modules started the same way 4001_gz_x500 starts them.
+#
+
+. ${R}etc/init.d/rc.mc_defaults
+
+PX4_SIMULATOR=${PX4_SIMULATOR:=sihsim}
+PX4_SIM_MODEL=${PX4_SIM_MODEL:=quadx}
+
+param set-default SENS_EN_GPSSIM 1
+param set-default SENS_EN_BAROSIM 1
+param set-default SENS_EN_MAGSIM 1
+
+param set-default CBRK_SUPPLY_CHK 894281
+param set-default CBRK_IO_SAFETY 22027
+
+param set-default CA_ROTOR_COUNT 4
+param set-default CA_ROTOR0_PX 0.15
+param set-default CA_ROTOR0_PY 0.15
+param set-default CA_ROTOR0_KM 0.05
+param set-default CA_ROTOR1_PX -0.15
+param set-default CA_ROTOR1_PY -0.15
+param set-default CA_ROTOR1_KM 0.05
+param set-default CA_ROTOR2_PX 0.15
+param set-default CA_ROTOR2_PY -0.15
+param set-default CA_ROTOR2_KM -0.05
+param set-default CA_ROTOR3_PX -0.15
+param set-default CA_ROTOR3_PY 0.15
+param set-default CA_ROTOR3_KM -0.05
+
+param set-default PWM_MAIN_FUNC1 101
+param set-default PWM_MAIN_FUNC2 102
+param set-default PWM_MAIN_FUNC3 103
+param set-default PWM_MAIN_FUNC4 104
+
+param set SIH_VEHICLE_TYPE 0
+param set SIH_IXX 0.024484
+param set SIH_IYY 0.024577
+param set SIH_IZZ 0.044939876
+param set SIH_IXY 0.0
+param set SIH_IXZ 0.0
+param set SIH_IYZ 0.0
+param set SIH_KDV 0.0
+param set SIH_KDW 0.0
+param set SIH_L_PITCH 0.176776695296636
+param set SIH_L_ROLL 0.176776695296636
+param set SIH_MASS 2.0
+param set SIH_Q_MAX 1.7275062256202294
+param set SIH_T_MAX 12.836026120939236
+param set SIH_T_TAU 0.004306
+
+param set IMU_GYRO_CUTOFF 200
+param set SDLOG_PROFILE 155
+param set RLT_ACTIV_SRC 2
+param set RLT_AUTO_ALT 1.5
+
+actuator_motors_multiplexer start
+rl_tools_policy start
+rl_tools_commander start
