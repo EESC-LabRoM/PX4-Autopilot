@@ -162,7 +162,14 @@ void MulticopterHoverThrustEstimator::Run()
 	const float dt = (local_pos.timestamp - _timestamp_last) * 1e-6f;
 	_timestamp_last = local_pos.timestamp;
 
-	if (_armed && _in_air && (dt > 0.001f) && (dt < 1.f) && PX4_ISFINITE(local_pos.az)) {
+	// While the RLtools policy owns the actuators the local position setpoint thrust is discarded by the
+	// multiplexer, so fusing it against the measured acceleration would teach the EKF a hover thrust that
+	// never produced that acceleration. Freeze (do not reset) so the pre-engage estimate survives handback.
+	_rl_tools_multiplexer_status_sub.update(&_rl_tools_multiplexer_status);
+	const bool rl_tools_active = _rl_tools_multiplexer_status.active
+				     && ((hrt_absolute_time() - _rl_tools_multiplexer_status.timestamp) < 100_ms);
+
+	if (_armed && _in_air && !rl_tools_active && (dt > 0.001f) && (dt < 1.f) && PX4_ISFINITE(local_pos.az)) {
 
 		_hover_thrust_ekf.predict(dt);
 
