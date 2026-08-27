@@ -145,6 +145,14 @@ MulticopterRateControl::Run()
 		}
 
 		_vehicle_status_sub.update(&_vehicle_status);
+		_rl_tools_multiplexer_status_sub.update(&_rl_tools_multiplexer_status);
+
+		// While the RLtools policy owns the actuators our output is discarded by the multiplexer, so the
+		// rate error never closes and _rate_int winds up to MC_*_INT_LIM unnoticed - it would then be
+		// dumped into the motors the instant the pilot takes back control. Stale status (multiplexer not
+		// running) counts as inactive so stock PX4 behavior is unchanged.
+		const bool rl_tools_active = _rl_tools_multiplexer_status.active
+					     && ((now - _rl_tools_multiplexer_status.timestamp) < 100_ms);
 
 		// use rates setpoint topic
 		vehicle_rates_setpoint_s vehicle_rates_setpoint{};
@@ -186,8 +194,9 @@ MulticopterRateControl::Run()
 		// run the rate controller
 		if (_vehicle_control_mode.flag_control_rates_enabled) {
 
-			// reset integral if disarmed
-			if (!_vehicle_control_mode.flag_armed || _vehicle_status.vehicle_type != vehicle_status_s::VEHICLE_TYPE_ROTARY_WING) {
+			// reset integral if disarmed or while the RLtools policy is driving the motors
+			if (!_vehicle_control_mode.flag_armed || _vehicle_status.vehicle_type != vehicle_status_s::VEHICLE_TYPE_ROTARY_WING
+			    || rl_tools_active) {
 				_rate_control.resetIntegral();
 			}
 

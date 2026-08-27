@@ -357,6 +357,15 @@ void MulticopterPositionControl::Run()
 		}
 
 		_vehicle_land_detected_sub.update(&_vehicle_land_detected);
+		_rl_tools_multiplexer_status_sub.update(&_rl_tools_multiplexer_status);
+
+		// While the RLtools policy owns the actuators our thrust setpoint is discarded by the multiplexer.
+		// The horizontal anti-windup in PositionControl::_velocityControl() compares the desired against the
+		// *produced* acceleration, but "produced" is our own dropped setpoint, so it never engages and
+		// _vel_int(0..1) grows unbounded while the policy diverges from our stale setpoint. Stale status
+		// (multiplexer not running) counts as inactive so stock PX4 behavior is unchanged.
+		const bool rl_tools_active = _rl_tools_multiplexer_status.active
+					     && ((hrt_absolute_time() - _rl_tools_multiplexer_status.timestamp) < 100_ms);
 
 		if (_param_mpc_use_hte.get()) {
 			hover_thrust_estimate_s hte;
@@ -491,6 +500,12 @@ void MulticopterPositionControl::Run()
 				Vector3f(0.f, 0.f, 100.f).copyTo(_setpoint.acceleration); // High downwards acceleration to make sure there's no thrust
 
 				// prevent any integrator windup
+				_control.resetIntegral();
+			}
+
+			if (rl_tools_active) {
+				// hold the integrators at zero (see above) without touching the setpoint, so the pilot
+				// gets a clean controller the moment they take back control
 				_control.resetIntegral();
 			}
 
