@@ -36,6 +36,7 @@ find_package(gz-transport
 	#REQUIRED COMPONENTS core
 	NAMES
 		#ignition-transport11 # IGN (Fortress and earlier) no longer supported
+		gz-transport13 # Harmonic (gz-sim8), which is what is installed here
 		gz-transport12
 	#QUIET
 )

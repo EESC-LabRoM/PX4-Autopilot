@@ -36,6 +36,7 @@
 #include <lib/mixer_module/mixer_module.hpp>
 
 #include <gz/transport.hh>
+#include <gz/msgs/actuators.pb.h>
 
 #include <uORB/PublicationMulti.hpp>
 #include <uORB/topics/esc_status.h>
